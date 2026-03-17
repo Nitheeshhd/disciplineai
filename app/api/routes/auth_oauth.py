@@ -60,7 +60,9 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_write_s
             'picture': user.picture
         }
         
-        return RedirectResponse(url="/dashboard")
+        return RedirectResponse(
+            url="https://disciplineai.onrender.com/dashboard"
+        )
     except Exception as e:
         logger.error(f"Auth callback failed: {str(e)}")
         return RedirectResponse(url="/?error=auth_error")
