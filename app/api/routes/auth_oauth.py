@@ -12,8 +12,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.get("/login")
 async def login(request: Request):
-    redirect_uri = request.url_for("auth_callback")
-    return await oauth.google.authorize_redirect(request, str(redirect_uri))
+    redirect_uri = "https://disciplineai.onrender.com/auth/callback"
+    return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @router.get("/callback")
 async def auth_callback(request: Request, db: AsyncSession = Depends(get_write_session)):
