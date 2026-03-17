@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="space-y-6">
+    <div class="glass-card productivity-card rounded-[1.8rem] p-6 md:p-8">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">Analytics</p>
+                <h1 class="mt-2 text-3xl font-bold text-white">Reports</h1>
+                <p class="mt-3 max-w-3xl text-sm text-slate-300">
+                    Review the last seven days of focus time, task completions, and habit consistency in the same dark glassmorphism style as the dashboard.
+                </p>
+            </div>
+            <span id="reportsSummaryChip" class="metric-chip">Loading analytics</span>
+        </div>
+    </div>
+
+    <section class="grid gap-5 md:grid-cols-3">
+        <article class="glass-card productivity-card rounded-[1.6rem] p-5">
+            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Focus Time</p>
+            <p id="reportFocusTotal" class="mt-3 text-3xl font-semibold text-white">0m</p>
+            <p class="mt-2 text-sm text-slate-400">Tracked from Focus Mode sessions.</p>
+        </article>
+        <article class="glass-card productivity-card rounded-[1.6rem] p-5">
+            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Tasks Completed</p>
+            <p id="reportTaskTotal" class="mt-3 text-3xl font-semibold text-white">0</p>
+            <p class="mt-2 text-sm text-slate-400">Includes tracker tasks and custom tasks.</p>
+        </article>
+        <article class="glass-card productivity-card rounded-[1.6rem] p-5">
+            <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Habit Completion</p>
+            <p id="reportHabitRate" class="mt-3 text-3xl font-semibold text-white">0%</p>
+            <p class="mt-2 text-sm text-slate-400">Built from your weekly habit grid.</p>
+        </article>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-12">
+        <article class="glass-card productivity-card rounded-[1.8rem] p-6 xl:col-span-6">
+            <div class="mb-5 flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold text-white">Focus Time</h2>
+                    <p class="mt-1 text-sm text-slate-400">Last 7 days</p>
+                </div>
+                <span class="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-200">Line chart</span>
+            </div>
+            <div class="h-80">
+                <canvas id="focusReportsChart"></canvas>
+            </div>
+        </article>
+
+        <article class="glass-card productivity-card rounded-[1.8rem] p-6 xl:col-span-6">
+            <div class="mb-5 flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold text-white">Tasks Completed</h2>
+                    <p class="mt-1 text-sm text-slate-400">Last 7 days</p>
+                </div>
+                <span class="rounded-full border border-indigo-400/35 bg-indigo-500/10 px-3 py-1 text-xs text-indigo-200">Bar chart</span>
+            </div>
+            <div class="h-80">
+                <canvas id="tasksReportsChart"></canvas>
+            </div>
+        </article>
+
+        <article class="glass-card productivity-card rounded-[1.8rem] p-6 xl:col-span-5">
+            <div class="mb-5 flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold text-white">Habit Completion Rate</h2>
+                    <p class="mt-1 text-sm text-slate-400">Last 7 days</p>
+                </div>
+                <span class="rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-200">Pie chart</span>
+            </div>
+            <div class="h-80">
+                <canvas id="habitsReportsChart"></canvas>
+            </div>
+        </article>
+
+        <aside class="glass-card productivity-card rounded-[1.8rem] p-6 xl:col-span-7">
+            <h2 class="text-lg font-semibold text-white">Insights</h2>
+            <div id="reportsInsights" class="mt-5 space-y-3">
+                <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 px-4 py-3 text-sm text-slate-300">
+                    Loading insight cards...
+                </div>
+            </div>
+        </aside>
+    </section>
+</section>
+
+<script>
+    (() => {
+        const store = window.DisciplineAIStore;
+        if (!store || typeof Chart === 'undefined') {
+            return;
+        }
+
+        const trackerStateUrl = '/dashboard/tracker/state';
+        const habitNames = ['Meditation', 'Deep Work', 'Reading', 'Workout'];
+
+        const summaryChip = document.getElementById('reportsSummaryChip');
+        const focusTotalNode = document.getElementById('reportFocusTotal');
+        const taskTotalNode = document.getElementById('reportTaskTotal');
+        const habitRateNode = document.getElementById('reportHabitRate');
+        const insightsNode = document.getElementById('reportsInsights');
+
+        const focusCanvas = document.getElementById('focusReportsChart');
+        const tasksCanvas = document.getElementById('tasksReportsChart');
+        const habitsCanvas = document.getElementById('habitsReportsChart');
+
+        if (!summaryChip || !focusTotalNode || !taskTotalNode || !habitRateNode || !insightsNode ||
+            !focusCanvas || !tasksCanvas || !habitsCanvas) {
+            return;
+        }
+
+        let focusChart = null;
+        let tasksChart = null;
+        let habitsChart = null;
+
+        const chartTheme = {
+            plugins: {
+                legend: {
+                    labels: { color: '#cbd5e1' },
+                },
+                tooltip: {
+                    backgroundColor: '#0f172a',
+                    borderColor: 'rgba(148,163,184,0.35)',
+                    borderWidth: 1,
+                },
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#cbd5e1' },
+                    grid: { color: 'rgba(51, 65, 85, 0.35)' },
+                },
+                y: {
+                    ticks: { color: '#cbd5e1' },
+                    grid: { color: 'rgba(51, 65, 85, 0.35)' },
+                },
+            },
+        };
+
+        const labelForDate = (dateValue) => new Date(dateValue).toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+        });
+
+        const renderInsights = (focusMinutesTotal, taskTotal, habitRate, trackerTrend) => {
+            const yesterday = trackerTrend[trackerTrend.length - 2] || null;
+            const today = trackerTrend[trackerTrend.length - 1] || null;
+            const messages = [];
+
+            if (today && yesterday && Number(today.completed_tasks || 0) < Number(yesterday.completed_tasks || 0)) {
+                messages.push('You completed fewer tasks than yesterday. Start with the highest priority task first.');
+            } else if (today && yesterday && Number(today.completed_tasks || 0) >= Number(yesterday.completed_tasks || 0)) {
+                messages.push('Task completion is holding steady or improving. Preserve that cadence tomorrow morning.');
+            }
+
+            if (focusMinutesTotal < 75) {
+                messages.push('Focus time is still light this week. One more full 25 minute session would change the trend quickly.');
+            } else {
+                messages.push(`Your most productive time of day appears to be ${store.getProductiveTimeOfDay().toLowerCase()}. Protect that block.`);
+            }
+
+            if (habitRate < 55) {
+                messages.push('Habit completion rate is below target. Simplify one habit so it is easier to keep daily.');
+            } else {
+                messages.push('Habit consistency is solid. Stack the next habit right after an existing one to keep the streak alive.');
+            }
+
+            messages.push(`Across the last seven days you logged ${taskTotal} completed tasks and ${store.formatMinutes(focusMinutesTotal)} of focus time.`);
+
+            insightsNode.innerHTML = messages.map((message) => `
+                <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 px-4 py-3 text-sm leading-7 text-slate-300">
+                    ${message}
+                </div>
+            `).join('');
+        };
+
+        const seedTodayHabitsFromTracker = (payload) => {
+            const habits = Array.isArray(payload?.today?.habits) ? payload.today.habits : [];
+            habits.forEach((habit) => {
+                if (!habit?.task_name) {
+                    return;
+                }
+                store.setHabitEntry(store.todayIso(), habit.task_name, Boolean(habit.status));
+            });
+        };
+
+        const renderCharts = async () => {
+            const response = await fetch(trackerStateUrl, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch tracker state (${response.status})`);
+            }
+            const payload = await response.json();
+            seedTodayHabitsFromTracker(payload);
+
+            const trackerTrend = Array.isArray(payload?.trend) ? payload.trend : [];
+            const lastSevenDates = store.lastNDates(7);
+            const focusSummary = store.getDailyFocusMinutes(7);
+            const customTaskCounts = store.getCompletedCustomTaskCountByDates(lastSevenDates);
+            const habitSummary = store.getHabitCompletionCounts(lastSevenDates, habitNames);
+            const habitTotal = habitSummary.completed + habitSummary.pending;
+
+            const labels = lastSevenDates.map((dateValue) => labelForDate(dateValue));
+            const focusValues = lastSevenDates.map((dateValue) => Number(focusSummary.counts[dateValue] || 0));
+            const taskValues = lastSevenDates.map((dateValue) => {
+                const apiValue = trackerTrend.find((entry) => entry.date === dateValue);
+                return Number(apiValue?.completed_tasks || 0) + Number(customTaskCounts[dateValue] || 0);
+            });
+
+            const focusMinutesTotal = focusValues.reduce((total, value) => total + value, 0);
+            const taskTotal = taskValues.reduce((total, value) => total + value, 0);
+            const habitRate = habitTotal ? Math.round((habitSummary.completed / habitTotal) * 100) : 0;
+
+            summaryChip.textContent = `${store.formatMinutes(focusMinutesTotal)} focus, ${taskTotal} tasks, ${habitRate}% habits`;
+            focusTotalNode.textContent = store.formatMinutes(focusMinutesTotal);
+            taskTotalNode.textContent = String(taskTotal);
+            habitRateNode.textContent = `${habitRate}%`;
+
+            if (!focusChart) {
+                focusChart = new Chart(focusCanvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Focus minutes',
+                            data: focusValues,
+                            borderColor: '#22d3ee',
+                            backgroundColor: 'rgba(34, 211, 238, 0.15)',
+                            fill: true,
+                            tension: 0.35,
+                            pointBackgroundColor: '#a5f3fc',
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        ...chartTheme,
+                    },
+                });
+            } else {
+                focusChart.data.labels = labels;
+                focusChart.data.datasets[0].data = focusValues;
+                focusChart.update();
+            }
+
+            if (!tasksChart) {
+                tasksChart = new Chart(tasksCanvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Tasks completed',
+                            data: taskValues,
+                            borderRadius: 12,
+                            backgroundColor: 'rgba(99, 102, 241, 0.72)',
+                            borderColor: '#818cf8',
+                            borderWidth: 1,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        ...chartTheme,
+                    },
+                });
+            } else {
+                tasksChart.data.labels = labels;
+                tasksChart.data.datasets[0].data = taskValues;
+                tasksChart.update();
+            }
+
+            if (!habitsChart) {
+                habitsChart = new Chart(habitsCanvas.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Completed', 'Pending'],
+                        datasets: [{
+                            data: [habitSummary.completed, habitSummary.pending],
+                            backgroundColor: ['rgba(16, 185, 129, 0.72)', 'rgba(148, 163, 184, 0.4)'],
+                            borderColor: ['#34d399', '#94a3b8'],
+                            borderWidth: 1,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: chartTheme.plugins,
+                    },
+                });
+            } else {
+                habitsChart.data.datasets[0].data = [habitSummary.completed, habitSummary.pending];
+                habitsChart.update();
+            }
+
+            renderInsights(focusMinutesTotal, taskTotal, habitRate, trackerTrend);
+        };
+
+        renderCharts().catch((error) => {
+            console.error(error);
+            summaryChip.textContent = 'Unable to load analytics';
+        });
+    })();
+</script>
+{% endblock %}

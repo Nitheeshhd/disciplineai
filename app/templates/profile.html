@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set user_name = user.name if user and user.name else "Creator" %}
+{% set avatar_seed = user_name | replace(" ", "+") %}
+{% set avatar_url = user.picture if user and user.picture else ("https://ui-avatars.com/api/?name=" ~ avatar_seed ~ "&background=0D8ABC&color=fff") %}
+
+<div class="mx-auto max-w-6xl">
+    <section class="glass-card overflow-hidden p-6 sm:p-8">
+        <div class="mb-8 flex flex-col gap-5 border-b border-slate-700/60 pb-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-300">Profile</p>
+                <h1 id="profileHeroName" class="mt-3 text-3xl font-bold text-white sm:text-4xl">{{ user_name }}</h1>
+                <p class="mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
+                    Manage your profile details on a dedicated page without affecting the dashboard layout.
+                </p>
+            </div>
+            <div class="flex items-center gap-4 rounded-3xl border border-slate-700/60 bg-slate-950/35 px-5 py-4">
+                <img id="profileAvatar" src="{{ avatar_url }}" alt="Profile avatar"
+                    class="h-16 w-16 rounded-2xl border border-slate-700/70 object-cover shadow-sm">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.24em] text-slate-400">Current Level</p>
+                    <p id="profileCurrentLevel" class="mt-1 text-lg font-semibold text-white">Achiever</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+            <section class="rounded-3xl border border-slate-700/60 bg-slate-950/30 p-6">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Overview</p>
+                        <h2 id="profileUserName" class="mt-2 text-2xl font-semibold text-white">{{ user_name }}</h2>
+                    </div>
+                    <a href="/dashboard"
+                        class="rounded-full border border-slate-600/70 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-cyan-400/60 hover:text-white">
+                        Back to Dashboard
+                    </a>
+                </div>
+
+                <div class="mt-6 grid gap-4 sm:grid-cols-2">
+                    <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Current Streak</p>
+                        <p id="profileCurrentStreak" class="mt-3 text-3xl font-semibold text-white">0 days</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Highest Productivity</p>
+                        <p id="profileHighestScore" class="mt-3 text-3xl font-semibold text-white">0%</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Next Level</p>
+                        <p id="profileNextLevel" class="text-sm font-medium text-cyan-300">Consistent (7 days)</p>
+                    </div>
+                    <div class="mt-4 h-3 overflow-hidden rounded-full bg-slate-800/80">
+                        <div id="profileLevelProgressBar"
+                            class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500"
+                            style="width: 0%;"></div>
+                    </div>
+                    <p id="profileLevelProgressText" class="mt-3 text-sm text-slate-300">0 / 7 days</p>
+                </div>
+
+                <div class="mt-6 rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                    <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Earned Badges</p>
+                    <div id="profileBadgesList" class="mt-4 flex flex-wrap gap-2">
+                        <span
+                            class="rounded-full border border-slate-600/70 bg-slate-800/60 px-3 py-1 text-xs font-medium text-slate-300">
+                            No badges yet
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="rounded-3xl border border-slate-700/60 bg-slate-950/30 p-6">
+                <div class="mb-5">
+                    <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Settings</p>
+                    <h2 class="mt-2 text-2xl font-semibold text-white">Update profile</h2>
+                    <p class="mt-2 text-sm text-slate-300">These fields use the existing profile update endpoint.</p>
+                </div>
+
+                <form id="profileSettingsForm" class="space-y-4">
+                    <div>
+                        <label for="profileNameInput" class="mb-2 block text-sm font-medium text-slate-200">Name</label>
+                        <input id="profileNameInput" type="text"
+                            class="w-full rounded-2xl border border-slate-700 bg-slate-900/60 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/70 focus:outline-none focus:ring-1 focus:ring-cyan-400/70"
+                            value="{{ user_name }}">
+                    </div>
+
+                    <div>
+                        <label for="profilePhoneInput" class="mb-2 block text-sm font-medium text-slate-200">Phone Number</label>
+                        <input id="profilePhoneInput" type="text"
+                            class="w-full rounded-2xl border border-slate-700 bg-slate-900/60 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/70 focus:outline-none focus:ring-1 focus:ring-cyan-400/70"
+                            placeholder="Enter your phone number">
+                    </div>
+
+                    <div>
+                        <label for="profileAgeInput" class="mb-2 block text-sm font-medium text-slate-200">Age</label>
+                        <input id="profileAgeInput" type="number" min="1" max="120"
+                            class="w-full rounded-2xl border border-slate-700 bg-slate-900/60 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/70 focus:outline-none focus:ring-1 focus:ring-cyan-400/70"
+                            placeholder="Enter your age">
+                    </div>
+
+                    <button id="profileSaveBtn" type="submit"
+                        class="w-full rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110">
+                        Save Changes
+                    </button>
+
+                    <p id="profileSaveStatus" class="hidden text-sm font-medium"></p>
+                </form>
+
+                <a href="/auth/logout"
+                    class="mt-6 block rounded-2xl border border-slate-600/80 bg-slate-900/50 px-4 py-3 text-center text-sm font-medium text-slate-200 transition hover:border-rose-400/60 hover:text-rose-200">
+                    Logout
+                </a>
+            </section>
+        </div>
+    </section>
+</div>
+
+<script>
+    (() => {
+        const trackerStateUrl = '/dashboard/tracker/state';
+        const profileUpdateUrl = '/dashboard/profile/update';
+        const hasCustomAvatar = {{ 'true' if user and user.picture else 'false' }};
+
+        const profileElements = {
+            avatar: document.getElementById('profileAvatar'),
+            heroName: document.getElementById('profileHeroName'),
+            userName: document.getElementById('profileUserName'),
+            currentLevel: document.getElementById('profileCurrentLevel'),
+            currentStreak: document.getElementById('profileCurrentStreak'),
+            highestScore: document.getElementById('profileHighestScore'),
+            nextLevel: document.getElementById('profileNextLevel'),
+            progressBar: document.getElementById('profileLevelProgressBar'),
+            progressText: document.getElementById('profileLevelProgressText'),
+            badges: document.getElementById('profileBadgesList'),
+            nameInput: document.getElementById('profileNameInput'),
+            phoneInput: document.getElementById('profilePhoneInput'),
+            ageInput: document.getElementById('profileAgeInput'),
+            saveButton: document.getElementById('profileSaveBtn'),
+            saveStatus: document.getElementById('profileSaveStatus'),
+        };
+
+        const buildAvatarUrl = (name) => {
+            const seed = encodeURIComponent(String(name || 'Creator'));
+            return `https://ui-avatars.com/api/?name=${seed}&background=0D8ABC&color=fff`;
+        };
+
+        const showSaveStatus = (message, isError = false) => {
+            if (!profileElements.saveStatus) {
+                return;
+            }
+            profileElements.saveStatus.textContent = message;
+            profileElements.saveStatus.classList.remove('hidden', 'text-emerald-300', 'text-rose-300');
+            profileElements.saveStatus.classList.add(isError ? 'text-rose-300' : 'text-emerald-300');
+        };
+
+        const renderProfile = (profile) => {
+            if (!profile) {
+                return;
+            }
+
+            const userName = String(profile.user_name || 'Creator');
+            const currentLevel = String(profile.current_level || 'Achiever');
+            const currentStreak = Number(profile.current_streak || 0);
+            const highestScore = Math.round(Number(profile.highest_productivity_score || 0) * 100);
+            const nextLevel = profile.next_level || {};
+            const progress = profile.progress || {};
+            const progressValue = Number(progress.value || 0);
+            const progressMax = Math.max(Number(progress.max || 0), 1);
+            const ratio = Math.min(Math.max(progressValue / progressMax, 0), 1);
+            const badges = Array.isArray(profile.earned_badges) ? profile.earned_badges : [];
+
+            if (profileElements.heroName) {
+                profileElements.heroName.textContent = userName;
+            }
+            if (profileElements.userName) {
+                profileElements.userName.textContent = userName;
+            }
+            if (profileElements.currentLevel) {
+                profileElements.currentLevel.textContent = currentLevel;
+            }
+            if (profileElements.currentStreak) {
+                profileElements.currentStreak.textContent = `${currentStreak} days`;
+            }
+            if (profileElements.highestScore) {
+                profileElements.highestScore.textContent = `${highestScore}%`;
+            }
+            if (profileElements.nextLevel) {
+                const nextLevelName = String(nextLevel.name || 'Consistent');
+                const daysRequired = Number(nextLevel.required_streak || progress.max || 0);
+                profileElements.nextLevel.textContent = `${nextLevelName} (${daysRequired} days)`;
+            }
+            if (profileElements.progressBar) {
+                profileElements.progressBar.style.width = `${Math.round(ratio * 100)}%`;
+            }
+            if (profileElements.progressText) {
+                profileElements.progressText.textContent = `${progressValue} / ${progressMax} days`;
+            }
+            if (profileElements.nameInput && document.activeElement !== profileElements.nameInput) {
+                profileElements.nameInput.value = userName;
+            }
+            if (profileElements.phoneInput && document.activeElement !== profileElements.phoneInput) {
+                profileElements.phoneInput.value = profile.phone || '';
+            }
+            if (profileElements.ageInput && document.activeElement !== profileElements.ageInput) {
+                profileElements.ageInput.value = profile.age ?? '';
+            }
+            if (profileElements.avatar && !hasCustomAvatar) {
+                profileElements.avatar.src = buildAvatarUrl(userName);
+            }
+
+            if (profileElements.badges) {
+                profileElements.badges.innerHTML = '';
+                if (!badges.length) {
+                    const badge = document.createElement('span');
+                    badge.className = 'rounded-full border border-slate-600/70 bg-slate-800/60 px-3 py-1 text-xs font-medium text-slate-300';
+                    badge.textContent = 'No badges yet';
+                    profileElements.badges.appendChild(badge);
+                } else {
+                    badges.forEach((badgeName) => {
+                        const badge = document.createElement('span');
+                        badge.className = 'rounded-full border border-cyan-400/35 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-100';
+                        badge.textContent = String(badgeName);
+                        profileElements.badges.appendChild(badge);
+                    });
+                }
+            }
+        };
+
+        const fetchProfileState = async () => {
+            const response = await fetch(trackerStateUrl, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch tracker state (${response.status})`);
+            }
+            const state = await response.json();
+            renderProfile(state.profile);
+        };
+
+        const saveProfileSettings = async () => {
+            const payload = {};
+            const nameValue = String(profileElements.nameInput?.value || '').trim();
+            const phoneValue = String(profileElements.phoneInput?.value || '').trim();
+            const ageValue = String(profileElements.ageInput?.value || '').trim();
+
+            if (nameValue) {
+                payload.name = nameValue;
+            }
+            if (profileElements.phoneInput) {
+                payload.phone = phoneValue;
+            }
+            if (ageValue) {
+                const parsedAge = Number(ageValue);
+                if (Number.isNaN(parsedAge)) {
+                    showSaveStatus('Age must be a number', true);
+                    return;
+                }
+                payload.age = parsedAge;
+            }
+
+            if (!Object.keys(payload).length) {
+                showSaveStatus('Update at least one field', true);
+                return;
+            }
+
+            const response = await fetch(profileUpdateUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to save profile (${response.status})`);
+            }
+            const state = await response.json();
+            renderProfile(state.profile);
+            showSaveStatus('Changes saved');
+        };
+
+        const settingsForm = document.getElementById('profileSettingsForm');
+        if (settingsForm) {
+            settingsForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                if (profileElements.saveButton) {
+                    profileElements.saveButton.setAttribute('disabled', 'disabled');
+                }
+                try {
+                    await saveProfileSettings();
+                } catch (error) {
+                    console.error(error);
+                    showSaveStatus('Failed to save profile', true);
+                } finally {
+                    if (profileElements.saveButton) {
+                        profileElements.saveButton.removeAttribute('disabled');
+                    }
+                }
+            });
+        }
+
+        fetchProfileState().catch((error) => {
+            console.error(error);
+            showSaveStatus('Failed to load profile details', true);
+        });
+    })();
+</script>
+{% endblock %}

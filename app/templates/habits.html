@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="space-y-6">
+    <div class="glass-card productivity-card rounded-[1.8rem] p-6 md:p-8">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">Consistency</p>
+                <h1 class="mt-2 text-3xl font-bold text-white">Habit Tracker</h1>
+                <p class="mt-2 max-w-2xl text-sm text-slate-300">
+                    View habits in a weekly grid, toggle the current day against the existing tracker API, and carry the rest of the weekly plan locally for better review.
+                </p>
+            </div>
+            <span id="habitCompletionChip" class="metric-chip">0% completion rate</span>
+        </div>
+    </div>
+
+    <section class="grid gap-6 xl:grid-cols-[1.18fr_0.82fr]">
+        <article class="glass-card productivity-card rounded-[1.8rem] p-6 md:p-8">
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-semibold text-white">Weekly Grid</h2>
+                    <p class="mt-1 text-sm text-slate-400">Monday through Sunday view for your core habits.</p>
+                </div>
+                <div id="habitWeekRange" class="rounded-full border border-slate-700/70 bg-slate-900/45 px-3 py-1 text-xs text-slate-300"></div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full border-separate border-spacing-y-3">
+                    <thead id="habitTableHead"></thead>
+                    <tbody id="habitTableBody"></tbody>
+                </table>
+            </div>
+        </article>
+
+        <aside class="space-y-5">
+            <article class="glass-card productivity-card rounded-[1.8rem] p-6">
+                <h2 class="text-lg font-semibold text-white">Weekly summary</h2>
+                <div class="mt-5 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                    <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Completed</p>
+                        <p id="habitCompletedStat" class="mt-3 text-3xl font-semibold text-white">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Pending</p>
+                        <p id="habitPendingStat" class="mt-3 text-3xl font-semibold text-white">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Today</p>
+                        <p id="habitTodayStat" class="mt-3 text-3xl font-semibold text-white">0</p>
+                    </div>
+                </div>
+            </article>
+
+            <article class="glass-card productivity-card rounded-[1.8rem] p-6">
+                <h2 class="text-lg font-semibold text-white">Usage notes</h2>
+                <ul class="mt-4 space-y-3 text-sm text-slate-300">
+                    <li class="rounded-2xl border border-slate-700/60 bg-slate-900/40 px-4 py-3">Today&apos;s toggles sync to the existing task tracker endpoint.</li>
+                    <li class="rounded-2xl border border-slate-700/60 bg-slate-900/40 px-4 py-3">Other days stay local so you can plan or review the full week.</li>
+                    <li class="rounded-2xl border border-slate-700/60 bg-slate-900/40 px-4 py-3">Reports use these weekly entries for the habit completion chart.</li>
+                </ul>
+            </article>
+        </aside>
+    </section>
+</section>
+
+<script>
+    (() => {
+        const store = window.DisciplineAIStore;
+        if (!store) {
+            return;
+        }
+
+        const trackerStateUrl = '/dashboard/tracker/state';
+        const trackerToggleUrl = '/dashboard/tracker/toggle';
+        const habitNames = ['Meditation', 'Deep Work', 'Reading', 'Workout'];
+
+        const headNode = document.getElementById('habitTableHead');
+        const bodyNode = document.getElementById('habitTableBody');
+        const rangeNode = document.getElementById('habitWeekRange');
+        const completionChip = document.getElementById('habitCompletionChip');
+        const completedStat = document.getElementById('habitCompletedStat');
+        const pendingStat = document.getElementById('habitPendingStat');
+        const todayStat = document.getElementById('habitTodayStat');
+
+        if (!headNode || !bodyNode || !rangeNode || !completionChip || !completedStat || !pendingStat || !todayStat) {
+            return;
+        }
+
+        const weekDates = store.getWeekDates();
+        const todayIso = store.todayIso();
+
+        const render = () => {
+            const { completed, pending } = store.getHabitCompletionCounts(weekDates.map((day) => day.iso), habitNames);
+            const todayCompleted = habitNames.filter((habitName) => store.getHabitEntry(todayIso, habitName)).length;
+            const total = completed + pending;
+            const rate = total ? Math.round((completed / total) * 100) : 0;
+
+            completionChip.textContent = `${rate}% completion rate`;
+            completedStat.textContent = String(completed);
+            pendingStat.textContent = String(pending);
+            todayStat.textContent = `${todayCompleted}/${habitNames.length}`;
+
+            const weekStart = new Date(weekDates[0].iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            const weekEnd = new Date(weekDates[6].iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            rangeNode.textContent = `${weekStart} - ${weekEnd}`;
+
+            headNode.innerHTML = `
+                <tr>
+                    <th class="px-4 py-2 text-left text-xs uppercase tracking-[0.18em] text-slate-400">Habit</th>
+                    ${weekDates.map((day) => `
+                        <th class="px-3 py-2 text-center text-xs uppercase tracking-[0.18em] ${day.iso === todayIso ? 'text-cyan-300' : 'text-slate-400'}">
+                            <div>${day.label}</div>
+                            <div class="mt-1 text-[11px]">${day.day}</div>
+                        </th>
+                    `).join('')}
+                </tr>
+            `;
+
+            bodyNode.innerHTML = habitNames.map((habitName) => `
+                <tr>
+                    <td class="rounded-l-2xl border border-slate-700/60 bg-slate-900/45 px-4 py-4 text-sm font-medium text-slate-100">${habitName}</td>
+                    ${weekDates.map((day) => {
+                        const checked = store.getHabitEntry(day.iso, habitName);
+                        const isToday = day.iso === todayIso;
+                        return `
+                            <td class="border-y border-slate-700/60 bg-slate-900/45 px-2 py-3 ${day.iso === weekDates[6].iso ? 'rounded-r-2xl border-r' : ''}">
+                                <label class="flex justify-center">
+                                    <input type="checkbox"
+                                        class="habit-week-toggle h-5 w-5 rounded border-slate-500 bg-slate-800 text-emerald-400 focus:ring-emerald-400/70"
+                                        data-habit-name="${habitName}"
+                                        data-habit-date="${day.iso}"
+                                        ${checked ? 'checked' : ''}>
+                                </label>
+                                <p class="mt-2 text-center text-[11px] ${isToday ? 'text-cyan-300' : 'text-slate-500'}">${isToday ? 'Today' : ''}</p>
+                            </td>
+                        `;
+                    }).join('')}
+                </tr>
+            `).join('');
+
+            bodyNode.querySelectorAll('.habit-week-toggle').forEach((input) => {
+                input.addEventListener('change', async () => {
+                    const habitName = input.getAttribute('data-habit-name') || '';
+                    const habitDate = input.getAttribute('data-habit-date') || todayIso;
+                    store.setHabitEntry(habitDate, habitName, input.checked);
+
+                    if (habitDate === todayIso) {
+                        input.disabled = true;
+                        try {
+                            const response = await fetch(trackerToggleUrl, {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    task_name: habitName,
+                                    status: input.checked,
+                                    task_date: habitDate,
+                                    source: 'habit',
+                                }),
+                            });
+                            if (!response.ok) {
+                                throw new Error(`Failed to sync habit (${response.status})`);
+                            }
+                        } catch (error) {
+                            console.error(error);
+                            store.setHabitEntry(habitDate, habitName, !input.checked);
+                            input.checked = !input.checked;
+                        } finally {
+                            input.disabled = false;
+                        }
+                    }
+
+                    render();
+                });
+            });
+        };
+
+        const seedTodayFromTracker = async () => {
+            const response = await fetch(trackerStateUrl, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch tracker state (${response.status})`);
+            }
+            const payload = await response.json();
+            const habits = Array.isArray(payload?.today?.habits) ? payload.today.habits : [];
+            habits.forEach((habit) => {
+                if (!habit?.task_name) {
+                    return;
+                }
+                store.setHabitEntry(todayIso, habit.task_name, Boolean(habit.status));
+            });
+        };
+
+        seedTodayFromTracker()
+            .catch((error) => console.error(error))
+            .finally(render);
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ app_name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="/static/css/dashboard.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <button class="add-bot">Add bot</button>
+        <nav>
+          <a class="item active" href="#"><i class="fa-regular fa-window-maximize"></i>Summary</a>
+          <a class="item" href="#"><i class="fa-solid fa-users"></i>Users</a>
+          <a class="item" href="#"><i class="fa-solid fa-robot"></i>My bots</a>
+          <a class="item" href="#"><i class="fa-solid fa-screwdriver-wrench"></i>UTM Generator</a>
+          <a class="item" href="#"><i class="fa-solid fa-code"></i>Website Extension</a>
+          <a class="item" href="#"><i class="fa-solid fa-bug"></i>Bot Errors</a>
+          <a class="item" href="#"><i class="fa-solid fa-chart-line"></i>Conversions</a>
+          <a class="item" href="#"><i class="fa-solid fa-location-dot"></i>Reports</a>
+        </nav>
+      </aside>
+      <main class="main">
+        <section class="hero"></section>
+        <section class="cards">
+          <article class="card">
+            <div>
+              <p>SESSIONS TODAY</p>
+              <h2 id="sessions">0</h2>
+            </div>
+            <span class="icon purple"><i class="fa-solid fa-layer-group"></i></span>
+          </article>
+          <article class="card">
+            <div>
+              <p>TOTAL USERS</p>
+              <h2 id="users">0</h2>
+            </div>
+            <span class="icon red"><i class="fa-solid fa-arrow-rotate-left"></i></span>
+          </article>
+          <article class="card">
+            <div>
+              <p>MESSAGES TODAY</p>
+              <h2 id="messages">0</h2>
+            </div>
+            <span class="icon green"><i class="fa-solid fa-flag"></i></span>
+          </article>
+          <article class="card">
+            <div>
+              <p>REVENUE TODAY</p>
+              <h2 id="revenue">0</h2>
+            </div>
+            <span class="icon orange"><i class="fa-solid fa-cart-shopping"></i></span>
+          </article>
+        </section>
+        <section class="row">
+          <article class="panel large">
+            <h3>Productivity Trend</h3>
+            <canvas id="trendChart"></canvas>
+          </article>
+          <article class="panel pies">
+            <div class="pieBox">
+              <h3>Gender</h3>
+              <canvas id="genderChart"></canvas>
+            </div>
+            <div class="pieBox">
+              <h3>Premium</h3>
+              <canvas id="premiumChart"></canvas>
+            </div>
+          </article>
+        </section>
+        <section class="row">
+          <article class="panel">
+            <h3>Recent goal achievements</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>DATE</th>
+                  <th>USER</th>
+                  <th>CONVERSION</th>
+                  <th>VALUE</th>
+                </tr>
+              </thead>
+              <tbody id="recentBody"></tbody>
+            </table>
+          </article>
+          <article class="panel">
+            <h3>Popular teams for today</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>TEAM</th>
+                  <th>NUMBER</th>
+                  <th>UNIQUE</th>
+                  <th>PER USER</th>
+                  <th>SESSIONS</th>
+                </tr>
+              </thead>
+              <tbody id="popularBody"></tbody>
+            </table>
+          </article>
+        </section>
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+  </body>
+</html>

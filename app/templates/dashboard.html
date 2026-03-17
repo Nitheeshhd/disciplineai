@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title or "DisciplineAI Dashboard" }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/productivity-ui.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    boxShadow: { glow: '0 20px 55px -20px rgba(56, 189, 248, 0.45)' },
+                },
+            },
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(circle at 12% 20%, rgba(30, 64, 175, 0.24), transparent 34%),
+                radial-gradient(circle at 88% 8%, rgba(6, 182, 212, 0.16), transparent 30%),
+                linear-gradient(140deg, #0b1f4b 0%, #020617 65%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.3s ease;
+        }
+
+        .glass {
+            position: relative;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.66), rgba(15, 23, 42, 0.46));
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 14px 38px rgba(2, 6, 23, 0.34);
+            isolation: isolate;
+        }
+
+        .glass > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .soft-ring {
+            box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.14), 0 0 36px rgba(56, 189, 248, 0.2);
+        }
+
+        .dashboard-card {
+            display: block;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+
+        .dashboard-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 18px 44px rgba(8, 47, 73, 0.28);
+        }
+    </style>
+</head>
+<body class="dashboard-page text-slate-100 antialiased">
+    {% set user_name = user.name if user and user.name else "Creator" %}
+    {% set avatar_seed = user_name | replace(" ", "+") %}
+    {% set avatar_url = user.picture if user and user.picture else ("https://ui-avatars.com/api/?name=" ~ avatar_seed ~ "&background=0f172a&color=e2e8f0") %}
+
+    <div class="page-orb one"></div>
+    <div class="page-orb two"></div>
+
+    <div class="mx-auto max-w-[1600px] px-4 pb-14 pt-5 sm:px-6 lg:px-10">
+        <nav class="glass productivity-card rounded-[1.6rem] px-5 py-4 sm:px-7">
+            <div class="flex flex-wrap items-center gap-4 sm:gap-6">
+                <div class="flex min-w-[180px] items-center gap-3">
+                    <div class="soft-ring flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-400/15 text-cyan-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.5 17h5M12 3v1M17.66 6.34l-.7.7M21 12h-1M4 12H3m3.34-5.66l-.7-.7m2.3 10.86a4.5 4.5 0 1 1 8.12 0l-.72.98a3.2 3.2 0 0 0-.62 1.88V20a2.3 2.3 0 1 1-4.6 0v-.64a3.2 3.2 0 0 0-.62-1.88l-.72-.98Z" />
+                        </svg>
+                    </div>
+                    <span class="text-xl font-extrabold tracking-tight text-white">DisciplineAI</span>
+                </div>
+
+                <div class="flex grow justify-center">
+                    <div class="hidden flex-wrap items-center gap-2 rounded-full border border-slate-700/70 bg-slate-900/45 p-1 text-sm md:flex">
+                        <a href="/dashboard" class="rounded-full bg-cyan-500/15 px-4 py-2 font-semibold text-cyan-300">Dashboard</a>
+                        <a href="/focus" class="rounded-full px-4 py-2 font-medium text-slate-300 transition hover:text-white">Focus</a>
+                        <a href="/tasks" class="rounded-full px-4 py-2 font-medium text-slate-300 transition hover:text-white">Tasks</a>
+                        <a href="/habits" class="rounded-full px-4 py-2 font-medium text-slate-300 transition hover:text-white">Habits</a>
+                        <a href="/reports" class="rounded-full px-4 py-2 font-medium text-slate-300 transition hover:text-white">Reports</a>
+                    </div>
+                </div>
+
+                <div class="ml-auto flex items-center gap-3">
+                    <button type="button" data-open-command-palette class="hidden items-center gap-3 rounded-full border border-slate-700/80 bg-slate-900/50 px-4 py-2 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-white sm:flex">
+                        <span>Quick actions</span>
+                        <span class="rounded-md border border-slate-600/80 px-2 py-0.5 text-xs text-slate-400">Ctrl+K</span>
+                    </button>
+                    <a href="/profile" class="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700/70 bg-slate-900/50 p-1 transition hover:border-cyan-400/80 focus:outline-none focus:ring-2 focus:ring-cyan-400/70" aria-label="Open profile">
+                        <img src="{{ avatar_url }}" alt="User avatar" class="h-8 w-8 rounded-full object-cover">
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content mt-6 space-y-6">
+            <section class="glass productivity-card overflow-hidden rounded-[2rem] p-6 sm:p-8">
+                <div class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+                    <div>
+                        <p class="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300/90">AI Productivity Cockpit</p>
+                        <h1 class="text-3xl font-bold leading-tight text-white sm:text-4xl">Welcome back, {{ user_name }}</h1>
+                        <p class="mt-3 max-w-xl text-sm text-slate-300 sm:text-base">Track focus, tasks, habits, streaks, missed items, and coaching suggestions from one place.</p>
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <span class="metric-chip">Live tracker</span>
+                            <span class="metric-chip">AI coach</span>
+                            <span class="metric-chip">Command palette</span>
+                        </div>
+                    </div>
+
+                    <div class="relative mx-auto w-full max-w-[380px]">
+                        <div class="absolute inset-0 z-0 rounded-full bg-cyan-400/10 blur-3xl"></div>
+                        <div class="relative mx-auto flex h-56 items-center justify-center rounded-[2rem] border border-cyan-300/20 bg-slate-900/45 shadow-glow">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-40 w-40 text-cyan-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M9.5 17h5M12 3v1M17.66 6.34l-.7.7M21 12h-1M4 12H3m3.34-5.66l-.7-.7m2.3 10.86a4.5 4.5 0 1 1 8.12 0l-.72.98a3.2 3.2 0 0 0-.62 1.88V20a2.3 2.3 0 1 1-4.6 0v-.64a3.2 3.2 0 0 0-.62-1.88l-.72-.98Z" />
+                                <circle cx="9" cy="11" r="1.1" fill="currentColor" />
+                                <circle cx="15" cy="11" r="1.1" fill="currentColor" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M9.8 14.6a3 3 0 0 0 4.4 0" />
+                            </svg>
+                        </div>
+                        <div class="mt-4 space-y-4">
+                            <article class="glass productivity-card card rounded-[1.6rem] p-5">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">Live Tracker</p>
+                                        <h2 class="mt-2 text-lg font-semibold text-white">Current Pulse</h2>
+                                    </div>
+                                    <span class="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-200">10s sync</span>
+                                </div>
+                                <div class="mt-5 grid grid-cols-2 gap-3">
+                                    <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                                        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Focus</p>
+                                        <p id="focus-time" class="mt-2 text-2xl font-semibold text-white">0</p>
+                                        <p class="mt-1 text-xs text-slate-400">minutes today</p>
+                                    </div>
+                                    <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                                        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Tasks</p>
+                                        <p id="tasks-done" class="mt-2 text-2xl font-semibold text-white">0</p>
+                                        <p class="mt-1 text-xs text-slate-400">completed today</p>
+                                    </div>
+                                    <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                                        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Habits</p>
+                                        <p id="habits-done" class="mt-2 text-2xl font-semibold text-white">0</p>
+                                        <p class="mt-1 text-xs text-slate-400">completed today</p>
+                                    </div>
+                                    <div class="rounded-2xl border border-slate-700/60 bg-slate-900/45 p-4">
+                                        <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Streak</p>
+                                        <p id="streak-live" class="mt-2 text-2xl font-semibold text-white">0</p>
+                                        <p class="mt-1 text-xs text-slate-400">current days</p>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <article class="glass productivity-card card rounded-[1.6rem] p-5">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">AI Coach</p>
+                                        <h2 class="mt-2 text-lg font-semibold text-white">Suggested Next Move</h2>
+                                    </div>
+                                    <span class="rounded-full border border-slate-700/70 bg-slate-900/45 px-3 py-1 text-xs text-slate-300">Rule based</span>
+                                </div>
+                                <p id="heroCoachInsight" class="mt-4 text-sm leading-7 text-slate-200">Loading coaching insight...</p>
+                                <p id="heroCoachMeta" class="mt-3 text-xs uppercase tracking-[0.18em] text-slate-400">Command palette ready</p>
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <button type="button" data-open-command-palette class="rounded-xl border border-cyan-400/45 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-500/20">Open Palette</button>
+                                    <a href="/focus" class="rounded-xl border border-slate-600/80 bg-slate-900/45 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-cyan-400/60">Start Focus</a>
+                                    <a href="/tasks/new" class="rounded-xl border border-slate-600/80 bg-slate-900/45 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-cyan-400/60">Add Task</a>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div id="missedTaskAlert" class="hidden rounded-2xl border border-amber-400/35 bg-amber-500/10 px-5 py-4 text-sm text-amber-100"></div>
+
+            <section class="grid gap-5 sm:grid-cols-2 xl:grid-cols-6">
+                <a href="/focus" class="dashboard-card"><article class="glass productivity-card card rounded-2xl p-5"><div class="mb-4 flex items-center justify-between"><span class="text-sm font-medium text-slate-300">Focus Time</span><div class="rounded-lg bg-cyan-400/15 p-2 text-cyan-300"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></div></div><p id="focusMetricValue" class="text-3xl font-semibold text-white">0m</p><p id="focusMetricTrend" class="mt-2 text-xs text-emerald-300">Tracked sessions</p></article></a>
+                <a href="/tasks" class="dashboard-card"><article class="glass productivity-card card rounded-2xl p-5"><div class="mb-4 flex items-center justify-between"><span class="text-sm font-medium text-slate-300">Tasks Completed</span><div class="rounded-lg bg-indigo-400/15 p-2 text-indigo-300"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m5 12 4 4L19 6" /></svg></div></div><p id="tasksMetricValue" class="text-3xl font-semibold text-white">0</p><p id="tasksMetricTrend" class="mt-2 text-xs text-emerald-300">0 completed today</p></article></a>
+                <a href="/habits" class="dashboard-card"><article class="glass productivity-card card rounded-2xl p-5"><div class="mb-4 flex items-center justify-between"><span class="text-sm font-medium text-slate-300">Habits Tracked</span><div class="rounded-lg bg-violet-400/15 p-2 text-violet-300"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4.5 6.75h15m-15 5.25h15m-15 5.25h10.5" /></svg></div></div><p id="habitsMetricValue" class="text-3xl font-semibold text-white">0</p><p id="habitsMetricTrend" class="mt-2 text-xs text-emerald-300">0 completed today</p></article></a>
+                <a href="/reports" class="dashboard-card"><article class="glass productivity-card card rounded-2xl p-5"><div class="mb-4 flex items-center justify-between"><span class="text-sm font-medium text-slate-300">Productivity Score</span><div class="rounded-lg bg-emerald-400/15 p-2 text-emerald-300"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12h3m12 0h3m-9 9v-3m0-12V3m6.36 2.64-2.12 2.12M7.76 16.24l-2.12 2.12m0-12.72 2.12 2.12m10.48 8.48 2.12 2.12" /></svg></div></div><p id="productivityMetricValue" class="text-3xl font-semibold text-white">0%</p><p id="productivityMetricTrend" class="mt-2 text-xs text-emerald-300">Calculated from daily completion</p></article></a>
+                <article class="glass productivity-card card rounded-2xl p-5"><div class="mb-4 flex items-center justify-between"><span class="text-sm font-medium text-slate-300">Current Streak</span><div class="rounded-lg bg-orange-400/15 p-2 text-orange-300"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3c2 3 3 5 3 7a3 3 0 1 1-6 0c0-2 1-4 3-7Zm0 8c4 0 7 2.8 7 6.2 0 2.1-1 3.8-2.7 4.8H7.7C6 21 5 19.3 5 17.2 5 13.8 8 11 12 11Z" /></svg></div></div><p id="currentStreakValue" class="text-3xl font-semibold text-white">0 days</p><p class="mt-2 text-xs text-orange-200">Any completion keeps it alive</p></article>
+                <article class="glass productivity-card card rounded-2xl p-5"><div class="mb-4 flex items-center justify-between"><span class="text-sm font-medium text-slate-300">Best Streak</span><div class="rounded-lg bg-amber-300/15 p-2 text-amber-200"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 21h8m-6-4h4m-7-6h10l-1.2 5H8.2L7 11Zm1-7h6l1 3H9l1-3Z" /></svg></div></div><p id="bestStreakValue" class="text-3xl font-semibold text-white">0 days</p><p class="mt-2 text-xs text-amber-100">Rolling best from recent activity</p></article>
+            </section>
+
+            <section class="grid gap-6 xl:grid-cols-12">
+                <article class="glass productivity-card card rounded-2xl p-5 xl:col-span-4"><div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-semibold text-white">Productivity Stats</h2><span class="text-xs text-slate-300">Last 7 days</span></div><div class="h-72"><canvas id="productivityChart"></canvas></div></article>
+                <article class="glass productivity-card card rounded-2xl p-5 xl:col-span-4">
+                    <div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-semibold text-white">Daily Habit Tracker</h2><a href="/habits" class="text-xs text-cyan-300 transition hover:text-cyan-200">Open full grid</a></div>
+                    <div id="habitTrackerList" class="space-y-3">
+                        {% for habit_name in ["Meditation", "Deep Work", "Reading", "Workout"] %}
+                        <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-700/60 bg-slate-900/35 px-3 py-2.5">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" class="habit-toggle h-4 w-4 rounded border-slate-500 bg-slate-800 text-emerald-400 focus:ring-emerald-400/70" data-habit-name="{{ habit_name }}">
+                                <span class="text-sm text-slate-100" data-habit-label>{{ habit_name }}</span>
+                            </div>
+                            <span class="rounded-full border border-slate-600/70 bg-slate-800/60 px-2 py-0.5 text-xs text-slate-300" data-habit-state>Pending</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-3 text-xs text-slate-400">Today&apos;s habit toggles sync with the tracker and feed reports.</p>
+                </article>
+                <article class="glass productivity-card card rounded-2xl p-5 xl:col-span-4">
+                    <div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-semibold text-white">Goals and Focus Timer</h2><span class="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">Today</span></div>
+                    <div id="taskChecklist" class="space-y-3">
+                        {% for goal in ["Meditation", "Deep Work", "Reading", "Workout", "Finalize client roadmap", "Write product update", "Review weekly analytics"] %}
+                        <label class="flex items-start gap-3 rounded-xl border border-slate-700/60 bg-slate-900/35 px-3 py-2.5">
+                            <input type="checkbox" class="task-toggle mt-0.5 h-4 w-4 rounded border-slate-500 bg-slate-800 text-cyan-400 focus:ring-cyan-400/60" data-task-name="{{ goal }}">
+                            <span class="text-sm text-slate-100" data-task-label>{{ goal }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p id="pendingTaskBanner" class="mt-4 hidden rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-xs text-amber-200"></p>
+                    <div class="mt-5 rounded-2xl border border-slate-700/60 bg-slate-900/35 px-4 py-4">
+                        <div class="flex items-center justify-between gap-3"><div><p class="text-xs uppercase tracking-[0.18em] text-slate-400">Current Task</p><p id="dashboardFocusTask" class="mt-2 text-sm font-medium text-slate-100">Deep Work Session</p></div><a href="/focus" class="text-xs text-cyan-300 transition hover:text-cyan-200">Open Focus Mode</a></div>
+                        <p id="focusDisplay" class="mt-5 text-center text-4xl font-semibold tracking-[0.2em] text-cyan-200">25:00</p>
+                        <div class="mt-4 grid grid-cols-2 gap-3">
+                            <a href="/tasks/new" class="button-primary rounded-xl border border-slate-600 bg-slate-900/50 px-4 py-2 text-center text-sm font-medium text-slate-100 transition hover:border-cyan-400/60">Add Task</a>
+                            <button id="focusButton" type="button" class="button-primary rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:brightness-110">Start Focus</button>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <section class="grid gap-6 lg:grid-cols-12">
+                <article class="glass productivity-card card rounded-2xl p-5 lg:col-span-6">
+                    <h2 class="mb-4 text-lg font-semibold text-white">Recent Activity</h2>
+                    <ul class="space-y-2">
+                        {% if recent_messages %}
+                            {% for msg in recent_messages[:4] %}
+                            <li class="flex items-start justify-between gap-3 rounded-xl border border-slate-700/55 bg-slate-900/35 px-4 py-3"><p class="text-sm text-slate-100">{{ msg.message_text[:65] + "..." if msg.message_text and msg.message_text|length > 65 else (msg.message_text or "Completed activity") }}</p><span class="shrink-0 text-xs text-slate-400">{{ msg.created_at.strftime("%H:%M") if msg.created_at else "Just now" }}</span></li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="flex items-start justify-between gap-3 rounded-xl border border-slate-700/55 bg-slate-900/35 px-4 py-3"><p class="text-sm text-slate-100">Finished the weekly report</p><span class="shrink-0 text-xs text-slate-400">09:15</span></li>
+                            <li class="flex items-start justify-between gap-3 rounded-xl border border-slate-700/55 bg-slate-900/35 px-4 py-3"><p class="text-sm text-slate-100">Read 20 pages of a book</p><span class="shrink-0 text-xs text-slate-400">11:40</span></li>
+                            <li class="flex items-start justify-between gap-3 rounded-xl border border-slate-700/55 bg-slate-900/35 px-4 py-3"><p class="text-sm text-slate-100">Completed meditation habit</p><span class="shrink-0 text-xs text-slate-400">13:05</span></li>
+                        {% endif %}
+                    </ul>
+                </article>
+                <article class="glass productivity-card card rounded-2xl p-5 lg:col-span-3"><div class="flex items-center justify-between gap-3"><h2 class="text-lg font-semibold text-white">AI Coach</h2><a href="/reports" class="text-xs text-cyan-300 transition hover:text-cyan-200">See reports</a></div><div id="aiCoachList" class="mt-4 space-y-3"><div class="rounded-xl border border-slate-700/60 bg-slate-900/40 px-4 py-3 text-sm text-slate-300">Loading coaching suggestions...</div></div></article>
+                <aside class="glass productivity-card card rounded-2xl p-5 lg:col-span-3"><h2 class="text-lg font-semibold text-white">Motivational Quote</h2><p id="quoteText" class="mt-4 rounded-xl border border-cyan-300/20 bg-cyan-500/10 px-4 py-4 text-sm leading-relaxed text-cyan-100">Success is the sum of small efforts, repeated day in and day out.</p><button id="newQuoteBtn" type="button" class="mt-4 w-full rounded-xl border border-cyan-400/60 bg-cyan-500/15 px-4 py-2.5 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-500/25">New Quote</button></aside>
+            </section>
+        </main>
+    </div>
+
+    <div id="dashboard-data" data-dates='{{ dates | default([], true) | tojson | safe }}' data-users='{{ daily_users | default([], true) | tojson | safe }}' data-messages='{{ daily_messages | default([], true) | tojson | safe }}' style="display:none;"></div>
+    <script src="/static/js/productivity-ui.js"></script>
+    <script>
+        (() => {
+            const store = window.DisciplineAIStore;
+            if (!store) {
+                return;
+            }
+
+            const dataNode = document.getElementById('dashboard-data');
+            const fallbackLabels = JSON.parse(dataNode?.dataset?.dates || '[]');
+            const fallbackMessages = JSON.parse(dataNode?.dataset?.messages || '[]');
+            const fallbackUsers = JSON.parse(dataNode?.dataset?.users || '[]');
+            const liveStatsUrl = '/api/live-stats';
+            const trackerStateUrl = '/dashboard/tracker/state';
+            const trackerToggleUrl = '/dashboard/tracker/toggle';
+            const defaultChartLabels = fallbackLabels.length ? fallbackLabels : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const defaultChartSeries = fallbackMessages.length
+                ? fallbackMessages.map((value, index) => Math.round(value * 0.65 + (fallbackUsers[index] || 0) * 0.35))
+                : [61, 68, 65, 73, 78, 75, 82];
+            const chartCanvas = document.getElementById('productivityChart');
+            const missedTaskAlert = document.getElementById('missedTaskAlert');
+            const aiCoachList = document.getElementById('aiCoachList');
+            const focusTimeNode = document.getElementById('focus-time');
+            const tasksDoneNode = document.getElementById('tasks-done');
+            const habitsDoneNode = document.getElementById('habits-done');
+            const streakLiveNode = document.getElementById('streak-live');
+            const heroCoachInsight = document.getElementById('heroCoachInsight');
+            const heroCoachMeta = document.getElementById('heroCoachMeta');
+            const focusTaskNode = document.getElementById('dashboardFocusTask');
+            const focusButton = document.getElementById('focusButton');
+            const focusDisplay = document.getElementById('focusDisplay');
+            const habitNames = ['Meditation', 'Deep Work', 'Reading', 'Workout'];
+            const alertAudio = typeof Audio !== 'undefined' ? new Audio('/static/sounds/alert.mp3') : null;
+
+            if (alertAudio) {
+                alertAudio.preload = 'auto';
+            }
+
+            let productivityChart = null;
+            let trackerState = null;
+            let alarmTickerId = null;
+            let audioContext = null;
+            let miniTimerId = null;
+            let miniTimerStartedAt = null;
+            let secondsRemaining = 25 * 60;
+            let liveStatsSnapshot = null;
+
+            const normalizeTaskName = (name) => (name || '').trim().toLowerCase();
+            const reminderStorageKey = () => `disciplineai-reminder-${store.todayIso()}`;
+            const missedStorageKey = () => `disciplineai-missed-${store.todayIso()}`;
+            const getLastReminderAt = () => Number(localStorage.getItem(reminderStorageKey()) || '0');
+            const setLastReminderAt = (timestamp) => localStorage.setItem(reminderStorageKey(), String(timestamp));
+
+            const renderChart = (labels, values) => {
+                if (!chartCanvas) {
+                    return;
+                }
+                if (!productivityChart) {
+                    productivityChart = new Chart(chartCanvas.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: 'Productivity (%)',
+                                data: values,
+                                borderColor: '#22d3ee',
+                                backgroundColor: 'rgba(34,211,238,0.18)',
+                                fill: true,
+                                tension: 0.35,
+                                borderWidth: 2.2,
+                                pointRadius: 2.5,
+                                pointHoverRadius: 4,
+                                pointBackgroundColor: '#a5f3fc',
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: '#0f172a',
+                                    borderColor: 'rgba(148,163,184,0.35)',
+                                    borderWidth: 1,
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    ticks: { color: '#cbd5e1' },
+                                    grid: { color: 'rgba(51,65,85,0.35)' },
+                                },
+                                y: {
+                                    min: 0,
+                                    max: 100,
+                                    ticks: { color: '#cbd5e1' },
+                                    grid: { color: 'rgba(51,65,85,0.35)' },
+                                },
+                            },
+                        },
+                    });
+                    return;
+                }
+                productivityChart.data.labels = labels;
+                productivityChart.data.datasets[0].data = values;
+                productivityChart.update();
+            };
+
+            const stopAlarm = () => {
+                if (alarmTickerId) {
+                    clearInterval(alarmTickerId);
+                    alarmTickerId = null;
+                }
+            };
+
+            const playAlertTone = () => {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) {
+                    return;
+                }
+                if (!audioContext) {
+                    audioContext = new AudioContextClass();
+                }
+                const oscillator = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.22);
+                oscillator.connect(gain);
+                gain.connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.25);
+            };
+
+            const playMissedTaskAudio = async () => {
+                if (alertAudio) {
+                    try {
+                        alertAudio.currentTime = 0;
+                        await alertAudio.play();
+                        return;
+                    } catch (error) {
+                        console.error('Alert audio fallback triggered', error);
+                    }
+                }
+                playAlertTone();
+            };
+
+            const startAlarm = (playImmediately = true) => {
+                if (!alarmTickerId) {
+                    if (playImmediately) {
+                        playAlertTone();
+                    }
+                    alarmTickerId = setInterval(playAlertTone, 4000);
+                }
+            };
+
+            const focusSummary = () => {
+                const summary = store.getDailyFocusMinutes(7);
+                return {
+                    todayMinutes: Number(summary.counts[store.todayIso()] || 0),
+                    weekTotal: Object.values(summary.counts).reduce((total, value) => total + Number(value || 0), 0),
+                };
+            };
+
+            const currentFocusTask = () => {
+                const pendingCustom = store.getCustomTasks().find((task) => !task.completed);
+                const pendingSystem = Array.isArray(trackerState?.today?.tasks)
+                    ? trackerState.today.tasks.find((task) => !task.status)
+                    : null;
+                return pendingCustom?.title || pendingSystem?.task_name || store.getCurrentFocusTask() || 'Deep Work Session';
+            };
+
+            const updateFocusTaskLabel = () => {
+                if (focusTaskNode) {
+                    focusTaskNode.textContent = currentFocusTask();
+                }
+            };
+
+            const renderMiniFocus = () => {
+                if (!focusDisplay) {
+                    return;
+                }
+                const minutes = String(Math.floor(secondsRemaining / 60)).padStart(2, '0');
+                const seconds = String(secondsRemaining % 60).padStart(2, '0');
+                focusDisplay.textContent = `${minutes}:${seconds}`;
+            };
+
+            const logMiniFocusSession = () => {
+                if (!miniTimerStartedAt) {
+                    return;
+                }
+                const elapsed = 25 * 60 - secondsRemaining;
+                const minutes = Math.round(elapsed / 60);
+                if (minutes <= 0) {
+                    return;
+                }
+                const taskName = currentFocusTask();
+                store.setCurrentFocusTask(taskName);
+                store.logFocusSession({
+                    task: taskName,
+                    minutes,
+                    date: store.todayIso(),
+                    startedAt: new Date(miniTimerStartedAt).toISOString(),
+                    endedAt: new Date().toISOString(),
+                    hour: new Date(miniTimerStartedAt).getHours(),
+                });
+            };
+
+            const computeRecentStreaks = (state) => {
+                const trend = Array.isArray(state?.trend) ? state.trend : [];
+                const lastThirtyDays = store.lastNDates(30);
+                const customCounts = store.getCompletedCustomTaskCountByDates(lastThirtyDays);
+                const completionMap = Object.fromEntries(lastThirtyDays.map((dateValue) => [dateValue, false]));
+
+                trend.forEach((entry) => {
+                    if (completionMap[entry.date] !== undefined && Number(entry.completed_tasks || 0) > 0) {
+                        completionMap[entry.date] = true;
+                    }
+                });
+
+                lastThirtyDays.forEach((dateValue) => {
+                    if (Number(customCounts[dateValue] || 0) > 0) {
+                        completionMap[dateValue] = true;
+                    }
+                    if (habitNames.some((habitName) => store.getHabitEntry(dateValue, habitName))) {
+                        completionMap[dateValue] = true;
+                    }
+                });
+
+                let current = 0;
+                for (let index = lastThirtyDays.length - 1; index >= 0; index -= 1) {
+                    if (!completionMap[lastThirtyDays[index]]) {
+                        break;
+                    }
+                    current += 1;
+                }
+
+                let best = 0;
+                let running = 0;
+                lastThirtyDays.forEach((dateValue) => {
+                    if (completionMap[dateValue]) {
+                        running += 1;
+                        best = Math.max(best, running);
+                    } else {
+                        running = 0;
+                    }
+                });
+                return { current, best };
+            };
+
+            const showNotification = async (title, body) => {
+                if (!('Notification' in window)) {
+                    return;
+                }
+                if (Notification.permission === 'default') {
+                    try {
+                        await Notification.requestPermission();
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+                if (Notification.permission === 'granted') {
+                    new Notification(title, { body });
+                }
+            };
+
+            const renderLiveStats = (data) => {
+                liveStatsSnapshot = data;
+                if (focusTimeNode) {
+                    focusTimeNode.innerText = String(data.focus_time_today ?? 0);
+                }
+                if (tasksDoneNode) {
+                    tasksDoneNode.innerText = String(data.tasks_completed ?? 0);
+                }
+                if (habitsDoneNode) {
+                    habitsDoneNode.innerText = String(data.habits_completed ?? 0);
+                }
+                if (streakLiveNode) {
+                    streakLiveNode.innerText = String(data.current_streak ?? 0);
+                }
+                if (heroCoachMeta) {
+                    heroCoachMeta.textContent = `${data.focus_time_today ?? 0} focus minutes today | ${data.tasks_completed ?? 0} tasks completed`;
+                }
+            };
+
+            const fetchLiveStats = async () => {
+                const response = await fetch(liveStatsUrl, { credentials: 'same-origin' });
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch live stats (${response.status})`);
+                }
+                renderLiveStats(await response.json());
+            };
+
+            const updateMetricCards = async (state) => {
+                const today = state?.today || {};
+                const completedTasks = Number(today.completed_tasks || 0);
+                const totalTasks = Number(today.total_tasks || 0);
+                const habits = Array.isArray(today.habits) ? today.habits : [];
+                const completedHabits = habits.filter((habit) => Boolean(habit.status)).length;
+                const productivityPct = Math.round(Number(today.productivity_score || 0) * 100);
+                const streaks = computeRecentStreaks(state);
+                const focus = focusSummary();
+
+                document.getElementById('focusMetricValue').textContent = store.formatMinutes(focus.todayMinutes);
+                document.getElementById('focusMetricTrend').textContent = `${store.formatMinutes(focus.weekTotal)} logged this week`;
+                document.getElementById('tasksMetricValue').textContent = String(completedTasks);
+                document.getElementById('tasksMetricTrend').textContent = `${completedTasks}/${totalTasks} tracker tasks completed today`;
+                document.getElementById('habitsMetricValue').textContent = String(completedHabits);
+                document.getElementById('habitsMetricTrend').textContent = `${completedHabits}/${habits.length} habits completed today`;
+                document.getElementById('productivityMetricValue').textContent = `${productivityPct}%`;
+                document.getElementById('productivityMetricTrend').textContent = `Score = completed / total (${completedTasks}/${totalTasks})`;
+                document.getElementById('currentStreakValue').textContent = `${streaks.current} days`;
+                document.getElementById('bestStreakValue').textContent = `${streaks.best} days`;
+                if (!liveStatsSnapshot) {
+                    renderLiveStats({
+                        focus_time_today: focus.todayMinutes,
+                        tasks_completed: completedTasks,
+                        habits_completed: completedHabits,
+                        current_streak: streaks.current,
+                    });
+                }
+                updateFocusTaskLabel();
+            };
+
+            const renderAICoach = (state) => {
+                if (!aiCoachList) {
+                    return;
+                }
+                const trend = Array.isArray(state?.trend) ? state.trend : [];
+                const today = trend[trend.length - 1] || null;
+                const yesterday = trend[trend.length - 2] || null;
+                const habitSummary = store.getHabitCompletionCounts(store.lastNDates(7), habitNames);
+                const focus = focusSummary();
+                const messages = [];
+
+                if (today && yesterday && Number(today.completed_tasks || 0) < Number(yesterday.completed_tasks || 0)) {
+                    messages.push('You completed fewer tasks today than yesterday. Start with your highest value unfinished item.');
+                } else {
+                    messages.push('Task completion is holding steady. Protect the next uninterrupted block to keep momentum.');
+                }
+
+                if (focus.weekTotal < 75) {
+                    messages.push('Focus time is still light this week. One more full sprint would materially improve the trend.');
+                } else {
+                    messages.push(`Your most productive time appears to be ${store.getProductiveTimeOfDay().toLowerCase()}. Schedule hard work there.`);
+                }
+
+                if (habitSummary.completed < habitSummary.pending) {
+                    messages.push('Habit streaks are fragile right now. Make one habit easier to start instead of adding another.');
+                } else {
+                    messages.push('Habit consistency is improving. Stack the next habit after one you already complete.');
+                }
+
+                aiCoachList.innerHTML = messages.map((message) => `
+                    <div class="rounded-xl border border-slate-700/60 bg-slate-900/40 px-4 py-3 text-sm leading-7 text-slate-300">
+                        ${message}
+                    </div>
+                `).join('');
+                if (heroCoachInsight) {
+                    heroCoachInsight.textContent = messages[0] || 'Keep the streak alive with one clear win.';
+                }
+                if (heroCoachMeta && !liveStatsSnapshot) {
+                    heroCoachMeta.textContent = `${focus.todayMinutes} focus minutes today | ${Number(today?.completed_tasks || 0)} tasks completed`;
+                }
+            };
+
+            const updateTaskAndHabitUi = (state) => {
+                const today = state?.today || {};
+                const tasks = Array.isArray(today.tasks) ? today.tasks : [];
+                const habits = Array.isArray(today.habits) ? today.habits : [];
+                const taskMap = new Map(tasks.map((task) => [normalizeTaskName(task.task_name), task]));
+                const habitMap = new Map(habits.map((habit) => [normalizeTaskName(habit.task_name), habit]));
+
+                document.querySelectorAll('.task-toggle').forEach((input) => {
+                    const task = taskMap.get(normalizeTaskName(input.getAttribute('data-task-name') || ''));
+                    const checked = Boolean(task?.status);
+                    input.checked = checked;
+                    const label = input.closest('label')?.querySelector('[data-task-label]');
+                    if (label) {
+                        label.classList.toggle('line-through', checked);
+                        label.classList.toggle('decoration-slate-500', checked);
+                        label.classList.toggle('text-slate-400', checked);
+                        label.classList.toggle('text-slate-100', !checked);
+                    }
+                });
+
+                document.querySelectorAll('.habit-toggle').forEach((input) => {
+                    const taskName = input.getAttribute('data-habit-name') || '';
+                    const habit = habitMap.get(normalizeTaskName(taskName));
+                    const checked = Boolean(habit?.status);
+                    input.checked = checked;
+                    store.setHabitEntry(store.todayIso(), taskName, checked);
+                    const wrapper = input.closest('label');
+                    const label = wrapper?.querySelector('[data-habit-label]');
+                    const badge = wrapper?.querySelector('[data-habit-state]');
+                    if (label) {
+                        label.classList.toggle('line-through', checked);
+                        label.classList.toggle('decoration-slate-500', checked);
+                        label.classList.toggle('text-slate-400', checked);
+                        label.classList.toggle('text-slate-100', !checked);
+                    }
+                    if (badge) {
+                        badge.textContent = checked ? 'Completed' : 'Pending';
+                        badge.classList.toggle('text-emerald-300', checked);
+                        badge.classList.toggle('border-emerald-400/40', checked);
+                        badge.classList.toggle('bg-emerald-500/10', checked);
+                        badge.classList.toggle('text-slate-300', !checked);
+                        badge.classList.toggle('border-slate-600/70', !checked);
+                        badge.classList.toggle('bg-slate-800/60', !checked);
+                    }
+                });
+
+                const pendingTasks = Array.isArray(state?.pending_tasks) ? state.pending_tasks : [];
+                const pendingTaskBanner = document.getElementById('pendingTaskBanner');
+                if (!pendingTaskBanner) {
+                    return;
+                }
+                if (!pendingTasks.length) {
+                    pendingTaskBanner.classList.add('hidden');
+                    pendingTaskBanner.textContent = '';
+                    return;
+                }
+                const preview = pendingTasks.slice(0, 3).join(', ');
+                pendingTaskBanner.textContent = `Pending (${pendingTasks.length}): ${preview}${pendingTasks.length > 3 ? '...' : ''}`;
+                pendingTaskBanner.classList.remove('hidden');
+            };
+
+            const checkMissedTasks = async (state) => {
+                if (!missedTaskAlert) {
+                    return;
+                }
+                const overdueCustom = store.getOverdueCustomTasks(new Date());
+                const pendingTasks = Array.isArray(state?.pending_tasks) ? state.pending_tasks : [];
+                const lateInDay = new Date().getHours() >= Number(state?.reminder?.start_hour || 21);
+                const shouldWarn = overdueCustom.length > 0 || (lateInDay && pendingTasks.length > 0);
+                if (!shouldWarn) {
+                    missedTaskAlert.classList.add('hidden');
+                    missedTaskAlert.textContent = '';
+                    stopAlarm();
+                    return;
+                }
+                const message = overdueCustom.length
+                    ? `Alert: You missed a task today. ${overdueCustom[0].title}${overdueCustom.length > 1 ? ' and more are overdue.' : ' is overdue.'}`
+                    : 'Alert: You missed a task today. Tracker items are still incomplete past their due window.';
+                missedTaskAlert.textContent = message;
+                missedTaskAlert.classList.remove('hidden');
+                if (!localStorage.getItem(missedStorageKey())) {
+                    localStorage.setItem(missedStorageKey(), '1');
+                    await playMissedTaskAudio();
+                    startAlarm(false);
+                    await showNotification('DisciplineAI Alert', message);
+                }
+            };
+
+            const renderTrackerState = async (state) => {
+                trackerState = state;
+                await updateMetricCards(state);
+                updateTaskAndHabitUi(state);
+                renderAICoach(state);
+                await checkMissedTasks(state);
+                const trend = Array.isArray(state?.trend) ? state.trend : [];
+                if (!trend.length) {
+                    renderChart(defaultChartLabels, defaultChartSeries);
+                    return;
+                }
+                renderChart(
+                    trend.map((point) => point.label || point.date || ''),
+                    trend.map((point) => Math.round(Number(point.score || 0) * 100))
+                );
+            };
+
+            const triggerPendingReminder = async () => {
+                const reminder = trackerState?.reminder || {};
+                const message = String(reminder.message || 'Your task is still pending. Go crack it now!');
+                await showNotification('DisciplineAI Reminder', message);
+                startAlarm();
+                setLastReminderAt(Date.now());
+            };
+
+            const reminderTick = () => {
+                if (!trackerState) {
+                    return;
+                }
+                const reminder = trackerState.reminder || {};
+                const pendingTasks = Array.isArray(trackerState.pending_tasks) ? trackerState.pending_tasks : [];
+                const overdueCustom = store.getOverdueCustomTasks(new Date());
+                if (overdueCustom.length) {
+                    return;
+                }
+                if (!reminder.enabled || !pendingTasks.length) {
+                    stopAlarm();
+                    return;
+                }
+                if (new Date().getHours() < Number(reminder.start_hour || 21)) {
+                    stopAlarm();
+                    return;
+                }
+                const repeatMs = Number(reminder.repeat_minutes || 30) * 60 * 1000;
+                const lastReminderAt = getLastReminderAt();
+                if (!lastReminderAt || Date.now() - lastReminderAt >= repeatMs) {
+                    void triggerPendingReminder();
+                }
+            };
+
+            const fetchTrackerState = async () => {
+                const response = await fetch(trackerStateUrl, { credentials: 'same-origin' });
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch tracker state (${response.status})`);
+                }
+                const payload = await response.json();
+                await renderTrackerState(payload);
+            };
+
+            const toggleTaskStatus = async (taskName, status, source) => {
+                const response = await fetch(trackerToggleUrl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_name: taskName, status: Boolean(status), source: source || 'task' }),
+                });
+                if (!response.ok) {
+                    throw new Error(`Failed to update task status (${response.status})`);
+                }
+                await renderTrackerState(await response.json());
+                void fetchLiveStats().catch((error) => console.error(error));
+                reminderTick();
+            };
+
+            document.querySelectorAll('.task-toggle').forEach((input) => {
+                input.addEventListener('change', async () => {
+                    const taskName = input.getAttribute('data-task-name');
+                    if (!taskName) {
+                        return;
+                    }
+                    input.disabled = true;
+                    try {
+                        await toggleTaskStatus(taskName, input.checked, 'task');
+                    } catch (error) {
+                        input.checked = !input.checked;
+                        console.error(error);
+                    } finally {
+                        input.disabled = false;
+                    }
+                });
+            });
+
+            document.querySelectorAll('.habit-toggle').forEach((input) => {
+                input.addEventListener('change', async () => {
+                    const taskName = input.getAttribute('data-habit-name');
+                    if (!taskName) {
+                        return;
+                    }
+                    input.disabled = true;
+                    try {
+                        await toggleTaskStatus(taskName, input.checked, 'habit');
+                    } catch (error) {
+                        input.checked = !input.checked;
+                        console.error(error);
+                    } finally {
+                        input.disabled = false;
+                    }
+                });
+            });
+
+            const quoteText = document.getElementById('quoteText');
+            const quoteBtn = document.getElementById('newQuoteBtn');
+            const quotes = [
+                'Discipline is choosing what you want most over what you want now.',
+                'Small habits, repeated daily, create extraordinary outcomes.',
+                'Your future is built by what you do today, not tomorrow.',
+                'Focus is a superpower in a world full of distractions.',
+            ];
+            if (quoteText && quoteBtn) {
+                quoteBtn.addEventListener('click', () => {
+                    quoteText.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+                });
+            }
+
+            if (focusButton && focusDisplay) {
+                renderMiniFocus();
+                focusButton.addEventListener('click', () => {
+                    if (miniTimerId) {
+                        clearInterval(miniTimerId);
+                        miniTimerId = null;
+                        focusButton.textContent = 'Start Focus';
+                        return;
+                    }
+                    const taskName = currentFocusTask();
+                    store.setCurrentFocusTask(taskName);
+                    updateFocusTaskLabel();
+                    miniTimerStartedAt = miniTimerStartedAt || Date.now();
+                    focusButton.textContent = 'Pause Focus';
+                    miniTimerId = setInterval(() => {
+                        if (secondsRemaining <= 1) {
+                            clearInterval(miniTimerId);
+                            miniTimerId = null;
+                            secondsRemaining = 0;
+                            renderMiniFocus();
+                            logMiniFocusSession();
+                            focusButton.textContent = 'Start Focus';
+                            secondsRemaining = 25 * 60;
+                            miniTimerStartedAt = null;
+                            renderMiniFocus();
+                            if (trackerState) {
+                                void updateMetricCards(trackerState);
+                                renderAICoach(trackerState);
+                            }
+                            return;
+                        }
+                        secondsRemaining -= 1;
+                        renderMiniFocus();
+                    }, 1000);
+                });
+            }
+
+            window.addEventListener('disciplineai:focus-session-logged', () => {
+                void fetchLiveStats().catch((error) => console.error(error));
+            });
+
+            renderChart(defaultChartLabels, defaultChartSeries);
+            fetchTrackerState().then(() => reminderTick()).catch((error) => console.error(error));
+            fetchLiveStats().catch((error) => console.error(error));
+            setInterval(() => {
+                fetchLiveStats().catch((error) => console.error(error));
+            }, 10 * 1000);
+            setInterval(() => {
+                fetchTrackerState().then(() => reminderTick()).catch((error) => console.error(error));
+            }, 60 * 1000);
+            setInterval(reminderTick, 60 * 1000);
+        })();
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,281 @@
+:root {
+  --bg: #f2f5fb;
+  --white: #ffffff;
+  --sidebar-width: 240px;
+  --text-main: #2e3b52;
+  --text-muted: #8791a3;
+  --shadow: 0 10px 25px rgba(26, 45, 71, 0.08);
+  --green-1: #18c987;
+  --green-2: #39cc91;
+  --line-blue: #2a93df;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: "Manrope", sans-serif;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  padding: 18px;
+  gap: 18px;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--white);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 22px 0;
+}
+
+.add-bot-btn {
+  width: calc(100% - 32px);
+  margin: 0 16px 18px;
+  border: 0;
+  border-radius: 12px;
+  height: 56px;
+  background: #f7f8fc;
+  color: #5f74d8;
+  font-weight: 700;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.sidebar nav {
+  border-top: 1px solid #f0f3fb;
+  padding-top: 14px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-decoration: none;
+  color: #3a4559;
+  font-size: 17px;
+  padding: 13px 22px;
+}
+
+.menu-item i {
+  width: 18px;
+  color: #97a2b8;
+}
+
+.menu-item.active {
+  color: #44a3f2;
+}
+
+.menu-item.active i {
+  color: #44a3f2;
+}
+
+.main {
+  flex: 1;
+  position: relative;
+}
+
+.gradient-header {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 250px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, var(--green-1) 0%, var(--green-2) 100%);
+}
+
+.metrics-grid,
+.chart-row,
+.table-row {
+  position: relative;
+  z-index: 2;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px 16px 0 16px;
+}
+
+.metric-card {
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 108px;
+}
+
+.metric-card p {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #485973;
+}
+
+.metric-card h3 {
+  margin: 0;
+  font-size: 39px;
+  line-height: 1;
+  color: #2d4261;
+  font-weight: 800;
+}
+
+.metric-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  color: #fff;
+  font-size: 20px;
+}
+
+.metric-icon.purple {
+  background: #7560e3;
+}
+
+.metric-icon.red {
+  background: #f45459;
+}
+
+.metric-icon.teal {
+  background: #37c8b1;
+}
+
+.metric-icon.orange {
+  background: #f9a53f;
+}
+
+.chart-row,
+.table-row {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.chart-row {
+  grid-template-columns: 1.45fr 1fr;
+}
+
+.table-row {
+  grid-template-columns: 1fr 1fr;
+  padding-top: 0;
+  padding-bottom: 20px;
+}
+
+.panel {
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+}
+
+.panel-title {
+  font-size: 30px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #2c3f60;
+}
+
+.line-panel canvas {
+  width: 100% !important;
+  height: 360px !important;
+}
+
+.pie-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.pie-group h4 {
+  margin: 0 0 4px 0;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: #2d4261;
+}
+
+.pie-group canvas {
+  width: 100% !important;
+  height: 260px !important;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 11px 8px;
+  border-bottom: 1px solid #edf1f7;
+}
+
+th {
+  font-size: 13px;
+  color: #95a1b8;
+  font-weight: 800;
+}
+
+td {
+  font-size: 15px;
+  color: #56647d;
+  font-weight: 600;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+@media (max-width: 1320px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .chart-row,
+  .table-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gradient-header {
+    height: 180px;
+  }
+
+  .panel-title {
+    font-size: 24px;
+  }
+
+  .metric-card h3 {
+    font-size: 28px;
+  }
+}

@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: disciplineai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: disciplineai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: disciplineai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    container_name: disciplineai-api
+    env_file:
+      - .env
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      WRITE_DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/disciplineai
+      READ_DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/disciplineai
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+
+  worker:
+    build: .
+    container_name: disciplineai-worker
+    env_file:
+      - .env
+    command: celery -A app.workers.runner.celery_app worker --loglevel=info
+    environment:
+      WRITE_DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/disciplineai
+      READ_DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/disciplineai
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres_data:
