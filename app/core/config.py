@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     jwt_refresh_secret_key: str = "change_me_refresh_secret"
     bot_token_encryption_key: str = "6Aa3moc7dwoJ3slSMkdFKCYf9XsU79xy1go9-ygfXjw="
     password_min_length: int = Field(default=8, ge=8, le=64)
-    allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    allowed_origins: list[str] = Field(default_factory=lambda: ["https://localhost:3000"])
     rate_limit_enabled: bool = True
     rate_limit_requests: int = Field(default=120, ge=10, le=10000)
     rate_limit_window_seconds: int = Field(default=60, ge=1, le=3600)
