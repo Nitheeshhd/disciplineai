@@ -52,13 +52,14 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_write_s
             user.picture = picture
             await db.commit()
 
-        # Set session
-        request.session['user'] = {
+        # Persist the signed-in user in the session cookie.
+        session_user = {
             'id': user.id,
             'email': user.email,
             'name': user.name or user.full_name,
             'picture': user.picture
         }
+        request.session["user"] = session_user
         
         return RedirectResponse(
             url="https://disciplineai.onrender.com/dashboard",

@@ -86,7 +86,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(SessionMiddleware, secret_key=settings.session_secret_key)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.session_secret_key,
+    same_site="none",
+    https_only=True,
+)
 
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "api" / "static")), name="static")
 
