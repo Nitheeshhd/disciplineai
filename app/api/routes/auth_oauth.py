@@ -60,9 +60,10 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_write_s
             'picture': user.picture
         }
         request.session["user"] = session_user
+        print("SESSION SET:", request.session)
         
         return RedirectResponse(
-            url="https://disciplineai.onrender.com/dashboard",
+            url="/dashboard",
             status_code=302
         )
     except Exception as e:

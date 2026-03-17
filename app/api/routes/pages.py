@@ -96,6 +96,7 @@ async def dashboard_home(
     db: AsyncSession = Depends(get_read_session)
 ) -> HTMLResponse:
     """Protected Dashboard Home."""
+    print("SESSION READ:", request.session)
     user = request.session.get("user")
     if not user:
         return RedirectResponse(url="/", status_code=303)

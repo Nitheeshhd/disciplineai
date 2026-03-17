@@ -89,6 +89,7 @@ app.add_middleware(
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.session_secret_key,
+    session_cookie="session",
     same_site="none",
     https_only=True,
 )
