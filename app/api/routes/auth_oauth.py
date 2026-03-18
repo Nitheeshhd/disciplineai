@@ -68,7 +68,7 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_write_s
         )
     except Exception as e:
         print("OAUTH ERROR:", str(e))   # 🔥 VERY IMPORTANT
-    raise e
+    raise 
 
 @router.get("/logout")
 async def logout(request: Request):
