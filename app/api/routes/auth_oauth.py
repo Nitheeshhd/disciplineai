@@ -19,23 +19,25 @@ async def login(request: Request):
 async def auth_callback(request: Request, db: AsyncSession = Depends(get_write_session)):
     try:
         token = await oauth.google.authorize_access_token(request)
-        user_info = token.get("userinfo")
-        if not user_info and token.get("access_token"):
-            user_info = await oauth.google.userinfo(token=token)
+
+        resp = await oauth.google.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            token=token
+        )
+        user_info = resp.json()
+
         if not user_info:
             return RedirectResponse(url="/?error=oauth_failed")
-        
+
         email = user_info.get('email')
         name = user_info.get('name')
         picture = user_info.get('picture')
 
-        # Check if user exists
         stmt = select(User).where(User.email == email)
         result = await db.execute(stmt)
         user = result.scalar_one_or_none()
 
         if not user:
-            # Create new user
             user = User(
                 email=email,
                 full_name=name,
@@ -48,29 +50,23 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_write_s
             await db.commit()
             await db.refresh(user)
         else:
-            # Update user info if changed
             user.full_name = name
             user.name = name
             user.picture = picture
             await db.commit()
 
-        # Persist the signed-in user in the session cookie.
-        session_user = {
-            'id': user.id,
-            'email': user.email,
-            'name': user.name or user.full_name,
-            'picture': user.picture
+        request.session["user"] = {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "picture": user.picture
         }
-        request.session["user"] = session_user
-        print("SESSION SET:", request.session)
-        
-        return RedirectResponse(
-            url="/dashboard",
-            status_code=302
-        )
+
+        return RedirectResponse(url="/dashboard", status_code=302)
+
     except Exception as e:
         logger.exception("Auth callback failed: %s", e)
-        return RedirectResponse(url=f"/?error={str(e)}", status_code=30)
+        return RedirectResponse(url=f"/?error={str(e)}", status_code=302)
 
 @router.get("/logout")
 async def logout(request: Request):
