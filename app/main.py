@@ -92,6 +92,7 @@ app.add_middleware(
     session_cookie="session",
     same_site="lax",
     https_only=True,
+    max_age=86400, 
 )
 
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "api" / "static")), name="static")
