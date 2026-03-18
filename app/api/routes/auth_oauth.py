@@ -19,7 +19,9 @@ async def login(request: Request):
 async def auth_callback(request: Request, db: AsyncSession = Depends(get_write_session)):
     try:
         token = await oauth.google.authorize_access_token(request)
-        user_info = await oauth.google.userinfo(token)
+        user_info = token.get("userinfo")
+        if not user_info and token.get("access_token"):
+            user_info = await oauth.google.userinfo(token=token)
         if not user_info:
             return RedirectResponse(url="/?error=oauth_failed")
         
@@ -68,7 +70,7 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_write_s
         )
     except Exception as e:
         logger.exception("Auth callback failed: %s", e)
-        return RedirectResponse(url="/?error=auth_error", status_code=302)
+        return RedirectResponse(url=f"/?error={str(e)}", status_code=30)
 
 @router.get("/logout")
 async def logout(request: Request):
