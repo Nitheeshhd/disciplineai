@@ -61,6 +61,7 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_write_s
             "name": user.name,
             "picture": user.picture
         }
+        print("SESSION SET:", request.session)
 
         return RedirectResponse(url="/dashboard", status_code=302)
 

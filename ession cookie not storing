@@ -1,0 +1,5 @@
+[33mcommit 5d841cc92f01c14294f76e6985f0680aa2c01e23[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Nitheesh H D <nithishahdhalmane6363@gmail.com>
+Date:   Wed Mar 18 10:11:10 2026 +0530
+
+    fix: google oauth userinfo + redirect bug

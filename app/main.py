@@ -90,9 +90,8 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=settings.session_secret_key,
     session_cookie="session",
-    same_site="none",
+    same_site="lax",
     https_only=True,
-    domain="disciplineai.onrender.com",
 )
 
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "api" / "static")), name="static")
