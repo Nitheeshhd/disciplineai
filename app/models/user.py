@@ -1,10 +1,25 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import BigInteger, Boolean, CheckConstraint, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 from app.models.mixins import SoftDeleteMixin, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.badge import Badge
+    from app.models.bot import Bot
+    from app.models.campaign import Campaign
+    from app.models.campaign_tracking import CampaignTracking
+    from app.models.conversion import Conversion
+    from app.models.habit_log import HabitLog
+    from app.models.message import Message
+    from app.models.payment import Payment
+    from app.models.role import Role
+    from app.models.session import Session
+    from app.models.task_status import DailyTaskStatus
 
 
 class User(Base, TimestampMixin, SoftDeleteMixin):

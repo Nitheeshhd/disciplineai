@@ -36,8 +36,8 @@ class Settings(BaseSettings):
     rate_limit_requests: int = Field(default=120, ge=10, le=10000)
     rate_limit_window_seconds: int = Field(default=60, ge=1, le=3600)
 
-    write_database_url: str = "sqlite+aiosqlite:///./disciplineai_enterprise.db"
-    read_database_url: str = "sqlite+aiosqlite:///./disciplineai_enterprise.db"
+    write_database_url: str = "sqlite+aiosqlite:///./disciplineai.db"
+    read_database_url: str = "sqlite+aiosqlite:///./disciplineai.db"
     sql_echo: bool = False
     db_pool_size: int = Field(default=20, ge=5, le=100)
     db_max_overflow: int = Field(default=40, ge=0, le=100)
