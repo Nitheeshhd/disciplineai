@@ -1,5 +1,7 @@
 # DisciplineAI Enterprise SaaS
 
+link:https://disciplineai.onrender.com
+
 Production-grade Telegram Bot Analytics & Productivity SaaS platform built with async FastAPI, PostgreSQL, Redis, Celery, APScheduler, SQLAlchemy 2.0, Alembic, and enterprise observability/security patterns.
 
 ## Architecture Summary
